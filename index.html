@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Derivativo Paramétrico de Precipitação — Soja MT</title>
+<meta name="description" content="Derivativo climático estilo CME/CBOT para hedge de risco de precipitação na soja do Médio-Norte do Mato Grosso. Precificação, basis risk e hedging effectiveness quantificados.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker__track" id="tickerTrack"></div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero__eyebrow">Estruturação · Derivativo Climático · Agro Brasileiro</div>
+    <h1>Chove pouco na safra,<br>o contrato <em>paga em dias</em>.</h1>
+    <p class="hero__sub">
+      Um derivativo paramétrico de precipitação, estilo CME/CBOT, para hedge de risco climático
+      da soja no Médio-Norte de Mato Grosso — 108 contratos, 3 municípios, curva de juros real
+      e 36 anos de dado histórico. Precificado, testado, e com o basis risk medido — não presumido.
+    </p>
+    <div class="hero__stats" id="heroStats"></div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">01 — O produto</div>
+      <h2 class="section__title">Um contrato por mês, seis meses de safra</h2>
+    </div>
+    <div class="overview">
+      <div class="overview__text">
+        <p><strong>O que é:</strong> uma PUT sobre precipitação mensal. Se chover menos que o
+        strike naquele mês, o comprador recebe o pagamento — sem perícia, sem prova de perda,
+        liquidação financeira em poucos dias.</p>
+        <p><strong>Por que mensal, não uma apólice única:</strong> a safra de soja no Nortão vai
+        de setembro (plantio) a fevereiro (fase reprodutiva/colheita). Cada mês tem uma
+        climatologia diferente — por isso cada contrato é precificado separadamente, como uma
+        cadeia de opções de bolsa, não um índice único de temporada.</p>
+        <p><strong>Como é precificado:</strong> Historical Burn Analysis e Monte Carlo
+        (distribuição Gamma com modelo hurdle para meses secos), descontado por uma curva de
+        juros futura real — não uma taxa única — atualizada diariamente.</p>
+      </div>
+      <div class="spec" id="specTable"></div>
+    </div>
+  </div>
+</section>
+
+<section id="chain">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">02 — Cadeia de strikes</div>
+      <h2 class="section__title">A safra inteira, mês a mês, pluviômetro por pluviômetro</h2>
+      <p class="section__desc">
+        Cada tubo é um mês de contrato. O preenchimento azul é a chuva média histórica; a linha
+        dourada é o strike escolhido — abaixo dela, o contrato paga. Troque a cidade e o strike
+        para ver o prêmio e a probabilidade de acionamento mudarem em tempo real.
+      </p>
+    </div>
+
+    <div class="gauge-controls">
+      <div class="control-group">
+        <label>Cidade</label>
+        <div class="pillbar" id="cityPills"></div>
+      </div>
+      <div class="control-group">
+        <label>Strike (% da climatologia)</label>
+        <div class="pillbar" id="strikePills"></div>
+      </div>
+    </div>
+
+    <div class="gauge-chain" id="gaugeChain"></div>
+
+    <div class="gauge-legend">
+      <span><i class="swatch" style="background:var(--rain)"></i> Chuva média histórica</span>
+      <span><i class="swatch" style="background:var(--gold)"></i> Nível do strike</span>
+      <span><i class="swatch" style="background:var(--terra)"></i> Probabilidade de acionamento (Monte Carlo)</span>
+    </div>
+  </div>
+</section>
+
+<section id="clima">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">03 — Climatologia</div>
+      <h2 class="section__title">Por que setembro é caro e fevereiro é barato</h2>
+      <p class="section__desc">
+        Chuva média histórica por mês, mesma cidade selecionada acima. Setembro é o mês mais
+        seco da safra — por isso qualquer strike ali tem mais chance de acionar, e custa mais caro.
+      </p>
+    </div>
+    <div class="clima-grid" id="climaGrid"></div>
+  </div>
+</section>
+
+<section id="risk">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">04 — Basis risk, medido não presumido</div>
+      <h2 class="section__title">O produto protege — mas contra o quê, exatamente?</h2>
+      <p class="section__desc">
+        Duas perguntas diferentes, duas respostas diferentes. A primeira: nos anos em que a
+        safra foi mal, o contrato pagou? A segunda, mais rigorosa (metodologia acadêmica padrão,
+        Vedenov &amp; Barnett 2004): comprar isso realmente reduz o risco de receita do produtor?
+      </p>
+    </div>
+
+    <div class="tables-row">
+      <div>
+        <h3 style="font-family:var(--font-mono);font-size:12px;text-transform:uppercase;color:var(--mist);letter-spacing:.05em;margin-bottom:14px;">
+          Matriz de acerto/erro — qualquer mês da temporada vs. ano ruim
+        </h3>
+        <table class="datatable">
+          <thead><tr><th>Strike</th><th>Sensibilidade</th><th>Precisão</th><th>Falso negativo</th></tr></thead>
+          <tbody id="basisRiskBody"></tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-family:var(--font-mono);font-size:12px;text-transform:uppercase;color:var(--mist);letter-spacing:.05em;margin-bottom:14px;">
+          Hedging effectiveness — redução de semi-variância
+        </h3>
+        <table class="datatable">
+          <thead><tr><th>Strike</th><th>Efet. crítico</th><th>Efet. temporada</th><th>Custo prêmio</th></tr></thead>
+          <tbody id="semiVarBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="finding-banner">
+      <strong>Achado honesto:</strong> pela metodologia padrão da literatura (redução de
+      semi-variância), comprar o contrato no tamanho ingênuo de 1 por hectare <strong>aumenta</strong>
+      o risco de receita em vez de reduzi-lo — o desvio-padrão do próprio payoff é
+      cerca de 13× maior que o da receita que ele deveria proteger. A razão de hedge
+      matematicamente ótima (<code>h* = Cov/Var</code>, Ederington 1979) sai próxima de zero em
+      todos os strikes testados. Isso não invalida a engenharia do produto — estabelece um limite
+      honesto do que ele entrega como instrumento de redução de risco em nível de fazenda
+      individual, consistente com a literatura (a efetividade de derivativos climáticos aumenta
+      com o nível de agregação, não em nível de produtor único).
+    </div>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">05 — O processo, não só o resultado</div>
+      <h2 class="section__title">Cada pivô veio de um teste que falhou do jeito certo</h2>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<section id="resources" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">06 — Aprofunde</div>
+      <h2 class="section__title">O material completo</h2>
+    </div>
+    <div class="resources">
+      <div class="resource">
+        <div class="resource__label">Documento · ~11 páginas</div>
+        <div class="resource__title">Memorial técnico</div>
+        <div class="resource__desc">Metodologia completa, todas as fórmulas, todos os achados — incluindo os que não deram certo.</div>
+        <a class="resource__link" href="./Memorial_Tecnico_Derivativo_Chuva_Soja.docx">Abrir documento →</a>
+      </div>
+      <div class="resource">
+        <div class="resource__label">Planilha · 8 abas</div>
+        <div class="resource__title">Modelo em Excel</div>
+        <div class="resource__desc">Cadeia de strikes completa, basis risk, e a estrutura pronta para atualização diária.</div>
+        <a class="resource__link" href="./Derivativo_Precipitacao_Soja_MT.xlsx">Abrir planilha →</a>
+      </div>
+      <div class="resource">
+        <div class="resource__label">Código-fonte</div>
+        <div class="resource__title">Repositório completo</div>
+        <div class="resource__desc">Motor de precificação, automação diária, e esta própria página — tudo em Python e JS.</div>
+        <a class="resource__link" href="https://github.com/">Ver no GitHub →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="foot-text">Derivativo Paramétrico de Precipitação — Soja MT · Projeto pessoal de estruturação financeira</span>
+    <span class="foot-text">Dados: NASA POWER · IBGE PAM · CEPEA/ESALQ · ANBIMA</span>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
