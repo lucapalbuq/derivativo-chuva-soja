@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Derivativo Paramétrico de Temperatura (CDD) — São Paulo</title>
+<meta name="description" content="Derivativo climático estilo CME de graus-dia de resfriamento (CDD) para hedge de exposição de geradores ao PLD via demanda térmica em São Paulo. Precificação, basis risk e hedging effectiveness quantificados.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true"><div class="ticker__track" id="tickerTrack"></div></div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero__eyebrow">Estruturação · Derivativo de Temperatura · Mercado de Energia</div>
+    <h1>Esquenta em SP,<br>o gerador <em>paga mais caro</em>.</h1>
+    <p class="hero__sub">
+      Um derivativo de graus-dia de resfriamento (CDD), estrutura real do CME adaptada ao Brasil —
+      hedge de exposição de geradores ao PLD via demanda térmica. 72 contratos, curva de juros real,
+      e um achado que a correlação direta temperatura×PLD não sustentava — resolvido com bootstrap
+      conjunto, não com um tick inventado.
+    </p>
+    <div class="hero__stats" id="heroStats"></div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">01 — O produto</div>
+      <h2 class="section__title">Uma CALL, não uma PUT — e isso muda tudo</h2>
+    </div>
+    <div class="overview">
+      <div class="overview__text">
+        <p><strong>O que é:</strong> uma CALL sobre CDD mensal. Paga quando o mês fica <em>mais quente</em>
+        que o strike — o oposto do produto agrícola de referência, porque o risco também é o oposto:
+        aqui o problema é custo alto (PLD disparando com a demanda de ar-condicionado), não receita baixa.</p>
+        <p><strong>Fórmula real do CME:</strong> CDD(dia) = max(0, T_média − 65°F). Nada inventado —
+        testamos até se 65°F fazia sentido pro clima de SP (spoiler: sim, o ótimo empírico bateu em
+        65,3°F, quase idêntico).</p>
+        <p><strong>O obstáculo real:</strong> correlação direta CDD→PLD é fraca (r≈0,08–0,13) — o preço
+        de energia no Brasil é dominado por hidrologia, não por demanda térmica. A solução não foi
+        forçar um tick fixo — foi reamostrar pares históricos reais (CDD,PLD), preservando exatamente
+        a correlação que existe.</p>
+      </div>
+      <div class="spec" id="specTable"></div>
+    </div>
+  </div>
+</section>
+
+<section id="chain">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">02 — Cadeia de strikes</div>
+      <h2 class="section__title">Os 12 meses do ano civil, termômetro por termômetro</h2>
+      <p class="section__desc">
+        Cada termômetro é um mês de contrato. O preenchimento é a média histórica de CDD; a linha
+        dourada é o strike — acima dela, o contrato paga (CALL, não PUT). Troque o strike pra ver
+        o prêmio mudar em tempo real.
+      </p>
+    </div>
+    <div class="gauge-controls">
+      <div class="control-group">
+        <label>Strike (desvios-padrão da média)</label>
+        <div class="pillbar" id="strikePills"></div>
+      </div>
+    </div>
+    <div class="therm-chain" id="thermChain"></div>
+    <div class="gauge-legend">
+      <span><i class="swatch" style="background:var(--heat)"></i> CDD médio histórico</span>
+      <span><i class="swatch" style="background:var(--volt)"></i> Nível do strike</span>
+      <span><i class="swatch" style="background:var(--negative)"></i> Probabilidade de acionamento</span>
+    </div>
+  </div>
+</section>
+
+<section id="clima">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">03 — Climatologia</div>
+      <h2 class="section__title">Por que setembro/outubro são os meses caros</h2>
+      <p class="section__desc">
+        CDD médio por mês (1981-2025, 45 anos) — verão (dez-mar) concentra o calor, mas o prêmio mais
+        alto do ano cai em set/out, puxado pela cauda de anos de crise hídrica no PLD histórico, não
+        só pela temperatura em si.
+      </p>
+    </div>
+    <div class="clima-grid" id="climaGrid"></div>
+  </div>
+</section>
+
+<section id="risk">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">04 — Basis risk, medido não presumido</div>
+      <h2 class="section__title">O resultado mais honesto do projeto — e o mais positivo</h2>
+      <p class="section__desc">
+        Mesma metodologia rigorosa do produto de referência (semi-variância, Vedenov & Barnett 2004),
+        adaptada pra hedge de CUSTO em vez de receita. O resultado aqui é o oposto do que encontramos
+        no produto agrícola.
+      </p>
+    </div>
+    <div class="tables-row">
+      <div>
+        <h3 style="font-family:var(--font-mono);font-size:12px;text-transform:uppercase;color:var(--mist);letter-spacing:.05em;margin-bottom:14px;">
+          Matriz de acerto/erro — mês "caro" (PLD no quartil superior)
+        </h3>
+        <table class="datatable">
+          <thead><tr><th>Strike</th><th>Sensibilidade</th><th>Precisão</th><th>Falso negativo</th></tr></thead>
+          <tbody id="basisRiskBody"></tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-family:var(--font-mono);font-size:12px;text-transform:uppercase;color:var(--mist);letter-spacing:.05em;margin-bottom:14px;">
+          Hedging effectiveness — redução de semi-variância (UPM)
+        </h3>
+        <table class="datatable">
+          <thead><tr><th>Strike</th><th>Prêmio</th><th>Efetividade</th></tr></thead>
+          <tbody id="semiVarBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="finding-banner">
+      <strong>Achado honesto:</strong> a efetividade é <strong>positiva</strong> em todos os strikes
+      testados (19,8% a 60,5%) — o oposto do produto agrícola de referência, onde a mesma metodologia
+      deu resultado negativo. A razão é estrutural: aqui, o payoff e o custo compartilham o mesmo
+      <code>PLD</code> realizado no mês — mesmo com a correlação CDD↔PLD fraca isoladamente, o hedge
+      acompanha o risco de preço por construção, não por sorte estatística.
+    </div>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">05 — O processo, não só o resultado</div>
+      <h2 class="section__title">Cada escolha testada contra dado real, não copiada do produto anterior</h2>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<section id="resources" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="section__head">
+      <div class="section__eyebrow">06 — Aprofunde</div>
+      <h2 class="section__title">O material completo</h2>
+    </div>
+    <div class="resources">
+      <div class="resource">
+        <div class="resource__label">Documento · 11 seções</div>
+        <div class="resource__title">Memorial técnico</div>
+        <div class="resource__desc">Metodologia completa — inclusive a validação da temperatura base e a jornada de calibração do tick.</div>
+        <a class="resource__link" href="./Memorial_Tecnico_Derivativo_Temperatura_SP.docx">Abrir documento →</a>
+      </div>
+      <div class="resource">
+        <div class="resource__label">Planilha · 5 abas</div>
+        <div class="resource__title">Modelo em Excel</div>
+        <div class="resource__desc">Cadeia de strikes completa, basis risk, hedging effectiveness, metodologia.</div>
+        <a class="resource__link" href="./Derivativo_Temperatura_SP.xlsx">Abrir planilha →</a>
+      </div>
+      <div class="resource">
+        <div class="resource__label">Projeto irmão</div>
+        <div class="resource__title">Derivativo de chuva (agro)</div>
+        <div class="resource__desc">O produto de referência — PUT paramétrica pra soja em Mato Grosso, mesma arquitetura de motor.</div>
+        <a class="resource__link" href="../">Ver projeto →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="foot-text">Derivativo Paramétrico de Temperatura (CDD) — São Paulo/SE-CO · Projeto pessoal de estruturação financeira</span>
+    <span class="foot-text">Dados: NASA POWER · ONS · CCEE · ANBIMA</span>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
